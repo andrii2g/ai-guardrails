@@ -1,6 +1,6 @@
-using AIGuardrails.Core;
+using A2G.AIGuardrails.Core;
 
-namespace AIGuardrails.Tests;
+namespace A2G.AIGuardrails.Tests;
 
 public sealed class GuardEngineTests
 {

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace AIGuardrails.Core;
+namespace A2G.AIGuardrails.Core;
 
 public interface IPolicyLoader
 {

@@ -1,8 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIGuardrails.Core;
+using System.CommandLine;
+using A2G.AIGuardrails.Core;
 
-namespace AIGuardrails.Cli;
+namespace A2G.AIGuardrails.Cli;
 
 public sealed class CliApplication
 {
@@ -23,10 +24,12 @@ public sealed class CliApplication
 
     public int Run(string[] args, TextWriter stdout, TextWriter stderr)
     {
-        CliOptions? options;
+        var commandLine = BuildCommandLine();
+        ParseResult parseResult;
+
         try
         {
-            options = CliOptions.Parse(args);
+            parseResult = commandLine.Parse(args);
         }
         catch (Exception ex)
         {
@@ -44,6 +47,42 @@ public sealed class CliApplication
                 stdout,
                 stderr);
         }
+
+        if (parseResult.Errors.Count > 0)
+        {
+            return WriteFailure(
+                new CliEnvelope
+                {
+                    SchemaVersion = "1.0",
+                    Status = "RuntimeError",
+                    Success = false,
+                    ExitCode = 5,
+                    ExecutionAllowed = false,
+                    Errors = parseResult.Errors.Select(error => error.Message).ToList()
+                },
+                false,
+                stdout,
+                stderr);
+        }
+
+        if (parseResult.CommandResult.Command.Name != "validate")
+        {
+            return WriteFailure(
+                new CliEnvelope
+                {
+                    SchemaVersion = "1.0",
+                    Status = "RuntimeError",
+                    Success = false,
+                    ExitCode = 5,
+                    ExecutionAllowed = false,
+                    Errors = new List<string> { "Usage: aiguardrails validate --policy <path> --request <path> [--audit <path>] [--json]" }
+                },
+                false,
+                stdout,
+                stderr);
+        }
+
+        var options = CliOptions.FromParseResult(parseResult);
 
         var loadResult = _policyLoader.LoadFromFile(options.PolicyPath);
         if (!loadResult.Success || loadResult.Policy is null)
@@ -150,6 +189,41 @@ public sealed class CliApplication
 
     private static int WriteFailure(CliEnvelope envelope, bool json, TextWriter stdout, TextWriter stderr)
         => WriteResult(envelope, json, stdout, stderr);
+
+    private static RootCommand BuildCommandLine()
+    {
+        var policyOption = new Option<string>("--policy")
+        {
+            Description = "Path to the policy YAML file."
+        };
+        policyOption.Required = true;
+
+        var requestOption = new Option<string>("--request")
+        {
+            Description = "Path to the request JSON file."
+        };
+        requestOption.Required = true;
+
+        var auditOption = new Option<string?>("--audit")
+        {
+            Description = "Path to the audit NDJSON file."
+        };
+
+        var jsonOption = new Option<bool>("--json")
+        {
+            Description = "Emit the mandatory JSON envelope."
+        };
+
+        var validateCommand = new Command("validate", "Validate a request against a policy.");
+        validateCommand.Options.Add(policyOption);
+        validateCommand.Options.Add(requestOption);
+        validateCommand.Options.Add(auditOption);
+        validateCommand.Options.Add(jsonOption);
+
+        var root = new RootCommand("AIGuardrails CLI");
+        root.Subcommands.Add(validateCommand);
+        return root;
+    }
 }
 
 public sealed class CliEnvelope
@@ -171,66 +245,19 @@ internal sealed class CliOptions
     public string? AuditPath { get; init; }
     public bool Json { get; init; }
 
-    public static CliOptions Parse(string[] args)
+    public static CliOptions FromParseResult(ParseResult parseResult)
     {
-        if (args.Length == 0 || !string.Equals(args[0], "validate", StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("Usage: aiguardrails validate --policy <path> --request <path> [--audit <path>] [--json]");
-        }
-
-        string? policyPath = null;
-        string? requestPath = null;
-        string? auditPath = null;
-        var json = false;
-
-        for (var i = 1; i < args.Length; i++)
-        {
-            switch (args[i])
-            {
-                case "--policy":
-                    policyPath = ReadValue(args, ref i, "--policy");
-                    break;
-                case "--request":
-                    requestPath = ReadValue(args, ref i, "--request");
-                    break;
-                case "--audit":
-                    auditPath = ReadValue(args, ref i, "--audit");
-                    break;
-                case "--json":
-                    json = true;
-                    break;
-                default:
-                    throw new InvalidOperationException($"Unknown argument '{args[i]}'.");
-            }
-        }
-
-        if (string.IsNullOrWhiteSpace(policyPath))
-        {
-            throw new InvalidOperationException("--policy is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(requestPath))
-        {
-            throw new InvalidOperationException("--request is required.");
-        }
+        var policyPath = parseResult.GetValue<string>("--policy");
+        var requestPath = parseResult.GetValue<string>("--request");
+        var auditPath = parseResult.GetValue<string?>("--audit");
+        var json = parseResult.GetValue<bool>("--json");
 
         return new CliOptions
         {
-            PolicyPath = policyPath,
-            RequestPath = requestPath,
+            PolicyPath = policyPath!,
+            RequestPath = requestPath!,
             AuditPath = auditPath,
             Json = json
         };
-    }
-
-    private static string ReadValue(string[] args, ref int index, string option)
-    {
-        if (index + 1 >= args.Length)
-        {
-            throw new InvalidOperationException($"{option} requires a value.");
-        }
-
-        index++;
-        return args[index];
     }
 }

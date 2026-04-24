@@ -1,4 +1,4 @@
-namespace AIGuardrails.Core;
+namespace A2G.AIGuardrails.Core;
 
 public sealed class GuardEngine : IGuardEngine
 {

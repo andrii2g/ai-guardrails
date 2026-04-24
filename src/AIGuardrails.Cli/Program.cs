@@ -1,4 +1,4 @@
-namespace AIGuardrails.Cli;
+namespace A2G.AIGuardrails.Cli;
 
 public static class Program
 {

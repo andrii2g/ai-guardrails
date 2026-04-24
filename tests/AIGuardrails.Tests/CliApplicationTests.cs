@@ -1,7 +1,7 @@
 using System.Text.Json;
-using AIGuardrails.Cli;
+using A2G.AIGuardrails.Cli;
 
-namespace AIGuardrails.Tests;
+namespace A2G.AIGuardrails.Tests;
 
 public sealed class CliApplicationTests
 {
