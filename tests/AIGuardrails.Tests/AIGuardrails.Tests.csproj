@@ -15,6 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AIGuardrails.Core\AIGuardrails.Core.csproj" />
+    <ProjectReference Include="..\..\src\AIGuardrails.Cli\AIGuardrails.Cli.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
