@@ -453,22 +453,50 @@ public sealed class GuardEngine : IGuardEngine
 
         if (path.StartsWith("request.attributes.", StringComparison.Ordinal))
         {
-            return request.Attributes.TryGetValue(path["request.attributes.".Length..], out value!);
+            if (request.Attributes.TryGetValue(path["request.attributes.".Length..], out var attributeValue))
+            {
+                value = attributeValue;
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
         }
 
         if (path.StartsWith("subject.attributes.", StringComparison.Ordinal))
         {
-            return request.Subject.Attributes.TryGetValue(path["subject.attributes.".Length..], out value!);
+            if (request.Subject.Attributes.TryGetValue(path["subject.attributes.".Length..], out var subjectValue))
+            {
+                value = subjectValue;
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
         }
 
         if (path.StartsWith("resource.attributes.", StringComparison.Ordinal))
         {
-            return request.Resource.Attributes.TryGetValue(path["resource.attributes.".Length..], out value!);
+            if (request.Resource.Attributes.TryGetValue(path["resource.attributes.".Length..], out var resourceValue))
+            {
+                value = resourceValue;
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
         }
 
         if (path.StartsWith("context.", StringComparison.Ordinal))
         {
-            return request.Context.TryGetValue(path["context.".Length..], out value!);
+            if (request.Context.TryGetValue(path["context.".Length..], out var contextValue))
+            {
+                value = contextValue;
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
         }
 
         value = string.Empty;

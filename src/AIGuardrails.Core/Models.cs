@@ -77,7 +77,7 @@ public sealed class PolicyLoadResult
         Policy = policy
     };
 
-    public static PolicyLoadResult Invalid(params IEnumerable<string> errors) => new()
+    public static PolicyLoadResult Invalid(IEnumerable<string> errors) => new()
     {
         Success = false,
         Policy = null,
@@ -153,13 +153,13 @@ public sealed class GuardEvaluationResult
         AuditEvent = auditEvent
     };
 
-    public static GuardEvaluationResult InvalidRequest(params IEnumerable<string> errors) => new()
+    public static GuardEvaluationResult InvalidRequest(IEnumerable<string> errors) => new()
     {
         Status = GuardEvaluationStatus.InvalidRequest,
         Errors = errors.ToList()
     };
 
-    public static GuardEvaluationResult AuditWriteFailed(GuardDecision decision, AuditEvent auditEvent, params IEnumerable<string> errors) => new()
+    public static GuardEvaluationResult AuditWriteFailed(GuardDecision decision, AuditEvent auditEvent, IEnumerable<string> errors) => new()
     {
         Status = GuardEvaluationStatus.AuditWriteFailed,
         Decision = decision,
@@ -167,7 +167,7 @@ public sealed class GuardEvaluationResult
         Errors = errors.ToList()
     };
 
-    public static GuardEvaluationResult RuntimeError(params IEnumerable<string> errors) => new()
+    public static GuardEvaluationResult RuntimeError(IEnumerable<string> errors) => new()
     {
         Status = GuardEvaluationStatus.RuntimeError,
         Errors = errors.ToList()
