@@ -161,7 +161,7 @@ public sealed class CliApplicationTests
             "deployment_environment": {
               "value": "production",
               "issuer": "runtime-environment-provider",
-              "issuedAtUtc": "2026-04-25T12:00:00Z"
+              "issuedAtUtc": "__NOW__"
             }
           }
         }
@@ -203,7 +203,7 @@ public sealed class CliApplicationTests
             var requestPath = Path.Combine(root.FullName, "request.json");
 
             File.WriteAllText(policyPath, policyYaml);
-            File.WriteAllText(requestPath, requestJson);
+            File.WriteAllText(requestPath, requestJson.Replace("__NOW__", DateTimeOffset.UtcNow.ToString("O"), StringComparison.Ordinal));
 
             using var stdout = new StringWriter();
             using var stderr = new StringWriter();
