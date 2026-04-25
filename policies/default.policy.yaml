@@ -1,0 +1,51 @@
+id: default-ai-guardrails
+version: 1.0.0
+defaultDecision: deny
+trustedSignals:
+  defaultMaxAgeSeconds: 315360000
+  maxAgeSecondsByKey:
+    content_category: 315360000
+    publish_review: 315360000
+audit:
+  enabled: true
+  includeFields:
+    - action
+    - subject.type
+    - subject.id
+    - resource.type
+    - resource.id
+    - request.attributes.intent
+  redactFields: []
+rules:
+  - id: deny-extremist-symbols
+    effect: deny
+    risk: high
+    reason: Extremist symbols are blocked for visual edits.
+    match:
+      action: photo.visual.edit
+      resource.type: photo
+      trusted.content_category: extremist_symbol
+      trusted.content_category.issuer: server-side-image-moderation
+  - id: review-content-publish
+    effect: review
+    risk: medium
+    reason: Publishing requires manual approval when review is required.
+    match:
+      action: content.publish
+      trusted.publish_review: required
+      trusted.publish_review.issuer: approval-orchestrator
+  - id: allow-content-publish
+    effect: allow
+    risk: low
+    reason: Publishing is allowed when approval has already been granted.
+    match:
+      action: content.publish
+      trusted.publish_review: approved
+      trusted.publish_review.issuer: approval-orchestrator
+  - id: allow-photo-metadata-update
+    effect: allow
+    risk: low
+    reason: Photo metadata updates are allowed.
+    match:
+      action: photo.metadata.update
+      resource.type: photo

@@ -1,0 +1,24 @@
+{
+  "subject": {
+    "type": "service",
+    "id": "publisher-service"
+  },
+  "action": "content.publish",
+  "resource": {
+    "type": "article",
+    "id": "article-300"
+  },
+  "attributes": {
+    "intent": "publish-approved-draft"
+  },
+  "trustedSignals": {
+    "publish_review": {
+      "value": "required",
+      "issuer": "approval-orchestrator",
+      "version": "v1",
+      "issuedAtUtc": "2026-01-01T00:00:00Z"
+    }
+  },
+  "context": {},
+  "correlationId": "demo-review-001"
+}

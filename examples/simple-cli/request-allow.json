@@ -1,0 +1,17 @@
+{
+  "subject": {
+    "type": "service",
+    "id": "photo-service"
+  },
+  "action": "photo.metadata.update",
+  "resource": {
+    "type": "photo",
+    "id": "photo-100"
+  },
+  "attributes": {
+    "intent": "update-caption"
+  },
+  "trustedSignals": {},
+  "context": {},
+  "correlationId": "demo-allow-001"
+}

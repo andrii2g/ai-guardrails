@@ -1,0 +1,24 @@
+{
+  "subject": {
+    "type": "service",
+    "id": "photo-service"
+  },
+  "action": "photo.visual.edit",
+  "resource": {
+    "type": "photo",
+    "id": "photo-200"
+  },
+  "attributes": {
+    "intent": "remove-watermark"
+  },
+  "trustedSignals": {
+    "content_category": {
+      "value": "extremist_symbol",
+      "issuer": "server-side-image-moderation",
+      "version": "2026-04-01",
+      "issuedAtUtc": "2026-01-01T00:00:00Z"
+    }
+  },
+  "context": {},
+  "correlationId": "demo-deny-001"
+}
