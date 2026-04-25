@@ -158,6 +158,91 @@ public sealed class GuardEngineTests
             });
     }
 
+    [Fact]
+    public void Evaluate_Returns_InvalidRequest_For_Stale_Decision_Relevant_Trusted_Signal()
+    {
+        var policy = LoadPolicy("""
+            id: test-policy
+            version: 1.0.0
+            defaultDecision: deny
+            trustedSignals:
+              defaultMaxAgeSeconds: 300
+              maxAgeSecondsByKey:
+                content_category: 120
+            audit:
+              enabled: false
+            rules:
+              - id: deny-extremist
+                effect: deny
+                match:
+                  action: photo.visual.edit
+                  trusted.content_category: extremist_symbol
+            """);
+
+        var request = new GuardRequest
+        {
+            Subject = new Subject { Type = "service", Id = "photo-service" },
+            Action = "photo.visual.edit",
+            Resource = new Resource { Type = "photo", Id = "photo-1" },
+            TrustedSignals = new Dictionary<string, TrustedSignal>
+            {
+                ["content_category"] = new()
+                {
+                    Value = "clean",
+                    Issuer = "server-side-image-moderation",
+                    IssuedAtUtc = "2026-04-25T11:55:00Z"
+                }
+            }
+        };
+
+        var engine = new GuardEngine(policy, clock: new FakeClock("2026-04-25T12:00:00Z"));
+        var result = engine.Evaluate(request);
+
+        Assert.Equal(GuardEvaluationStatus.InvalidRequest, result.Status);
+        Assert.Contains(result.Errors, error => error.Contains("content_category", StringComparison.Ordinal));
+        Assert.Null(result.Decision);
+    }
+
+    [Fact]
+    public void Evaluate_Uses_Deterministic_Summary_Reason_For_Multiple_Winning_Rules()
+    {
+        var policy = LoadPolicy("""
+            id: test-policy
+            version: 1.0.0
+            defaultDecision: deny
+            trustedSignals:
+              defaultMaxAgeSeconds: 300
+            audit:
+              enabled: false
+            rules:
+              - id: deny-b
+                effect: deny
+                risk: medium
+                match:
+                  action: content.publish
+              - id: deny-a
+                effect: deny
+                risk: high
+                match:
+                  action: content.publish
+            """);
+
+        var request = new GuardRequest
+        {
+            Subject = new Subject { Type = "service", Id = "publisher" },
+            Action = "content.publish",
+            Resource = new Resource { Type = "article", Id = "article-1" }
+        };
+
+        var engine = new GuardEngine(policy, clock: new FakeClock("2026-04-25T12:00:00Z"));
+        var result = engine.Evaluate(request);
+
+        Assert.Equal(GuardEvaluationStatus.Evaluated, result.Status);
+        Assert.Equal(DecisionType.Deny, result.Decision?.Decision);
+        Assert.Equal("Matched deny rules: deny-a, deny-b.", result.Decision?.Reason);
+        Assert.Equal(new[] { "deny-a", "deny-b" }, result.Decision?.MatchedRules);
+    }
+
     private static GuardPolicy LoadPolicy(string yaml)
     {
         var loader = new PolicyLoader();
